@@ -35,7 +35,7 @@ import io.reactivex.disposables.Disposable;
 
 /**
  * ===================================
- * describe:
+ * describe:注册页面
  * date:2018/6/25
  * author:zhuang
  * ===================================
@@ -61,7 +61,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         setContentView(R.layout.activity_register);
         initView();
     }
-
+    //初始化布局
     private void initView() {
         iv_register_back = (ImageView) findViewById(R.id.iv_register_back);
         iv_register_back.setOnClickListener(this);
@@ -102,7 +102,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                 break;
         }
     }
-
+    //初始化必填项
     private void submit() {
         // validate
         String code = et_register_code.getText().toString().trim();
@@ -233,7 +233,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             }
         });
     }
-
+    //手机实体键 返回键得操作
     @Override
     public void onBackPressed() {
         Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);

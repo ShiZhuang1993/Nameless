@@ -40,7 +40,7 @@ import io.reactivex.disposables.Disposable;
 
 /**
  * ===================================
- * describe:
+ * describe:登录页面
  * date:2018/6/25
  * author:zhuang
  * ===================================
@@ -73,6 +73,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
+    //初始化布局
     private void initView() {
         //头部布局
         rg_login = (RadioGroup) findViewById(R.id.rg_login);
@@ -142,7 +143,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         });
     }
 
+    //初始化数据
     private void initData() {
+        //判断本地存储得密码是否为null,为null时，当退出应用再次进入时展示登录页面
         String pwd = UserCentre.getInstance().getPwd();
         boolean autoLogin = UserCentre.getInstance().getAutoLogin();
         if (pwd != null && !pwd.equals("")) {
@@ -152,10 +155,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 finish();
             }
         } else {
-         et_login_code.setText("");
+            et_login_code.setText("");
         }
     }
 
+    //账号密码 必填项判断
     private void submitOne() {
         // validate
         String code = et_login_code.getText().toString().trim();
@@ -174,6 +178,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
+    //账号 验证码  必填项判断
     private void submitTwo() {
         // validate
         String code = et_login_code.getText().toString().trim();

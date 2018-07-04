@@ -30,7 +30,7 @@ ext {
             //6.0动态权限
             'acp'                      : 'com.mylhyl:acp:1.1.7',
 
-            //友盟统计
+            //阿里云统计
             "aliyuntongji": 'com.aliyun.ams:alicloud-android-man:1.2.0',
     ]
 }

@@ -35,7 +35,13 @@ import java.util.Random;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import me.leefeng.promptlibrary.PromptDialog;
-
+/**
+ * ===================================
+ * describe:主页面
+ * date:2018/6/25
+ * author:zhuang
+ * ===================================
+ */
 public class WebViewActivity extends AppCompatActivity implements View.OnClickListener {
 
     private WebView webView;
@@ -51,32 +57,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         setContentView(R.layout.activity_main);
         initView();
         initData();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        RetrofitUtil.getInstance().destroy();
-        UserCentre.getInstance().destroy();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        } else {
-            // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
-            if (System.currentTimeMillis() - exitTime > 2000) {
-                Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
-                // 将系统当前的时间赋值给exitTime
-                exitTime = System.currentTimeMillis();
-                return true;
-            } else {
-                finish();
-            }
-        }
-        return super.onKeyDown(keyCode, event);
     }
 
     //初始化布局
@@ -193,6 +173,32 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     }
 
     @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        RetrofitUtil.getInstance().destroy();
+        UserCentre.getInstance().destroy();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        } else {
+            // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
+            if (System.currentTimeMillis() - exitTime > 2000) {
+                Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                // 将系统当前的时间赋值给exitTime
+                exitTime = System.currentTimeMillis();
+                return true;
+            } else {
+                finish();
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.iv_main_share:
@@ -212,6 +218,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         }
     }
 
+    //阿里云手动埋点
     @Override
     protected void onPause() {
         super.onPause();
@@ -225,5 +232,4 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         MANService manService = MANServiceProvider.getService();
         manService.getMANPageHitHelper().pageAppear(this);
     }
-
 }
