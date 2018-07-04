@@ -51,7 +51,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private ImageView iv_main_share;
     private TextView tv_webview_exit;
     private PromptDialog promptDialog;
-    private String url;
     private TextView tv_webview_title;
 
     @Override
@@ -110,8 +109,40 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             }
 
             @Override
-            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+            public void doUpdateVisitedHistory(WebView view, final String url, boolean isReload) {
                 super.doUpdateVisitedHistory(view, url, isReload);
+                if (url.indexOf("detail") != -1){
+                    iv_main_share.setVisibility(View.VISIBLE);
+                    iv_main_share.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent textIntent = new Intent(Intent.ACTION_SEND);
+                            textIntent.setType("text/plain");
+                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            startActivity(Intent.createChooser(textIntent, "分享"));
+                        }
+                    });
+
+                    return;
+                }else {
+                    iv_main_share.setVisibility(View.GONE);
+                }
+                if (url.indexOf("share") != -1){
+                    iv_main_share.setVisibility(View.VISIBLE);
+                    iv_main_share.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent textIntent = new Intent(Intent.ACTION_SEND);
+                            textIntent.setType("text/plain");
+                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            startActivity(Intent.createChooser(textIntent, "分享"));
+                        }
+                    });
+
+                    return;
+                }else {
+                    iv_main_share.setVisibility(View.GONE);
+                }
             }
 
             @Override
@@ -167,7 +198,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             public void onNext(LoginBean value) {
                 if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
                     webView.loadUrl(value.getResult());
-                    url = value.getShare_url();
                 } else {
                     promptDialog.showError("加载失败");
                 }
@@ -215,12 +245,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.iv_main_share:
-                Intent textIntent = new Intent(Intent.ACTION_SEND);
-                textIntent.setType("text/plain");
-                textIntent.putExtra(Intent.EXTRA_TEXT, url);
-                startActivity(Intent.createChooser(textIntent, "分享"));
-                break;
             case R.id.tv_webview_exit://退出按钮 目前隐藏  todo
                 UserCentre.getInstance().clear();
                 //阿里云统计
