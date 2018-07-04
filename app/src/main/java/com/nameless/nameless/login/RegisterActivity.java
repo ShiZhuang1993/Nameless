@@ -53,6 +53,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private Button bt_register;
     private CheckBox cb_login_commitid;
     private CheckBox cb_login_commitlogin;
+    private EditText et_register_idcard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +62,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         setContentView(R.layout.activity_register);
         initView();
     }
+
     //初始化布局
     private void initView() {
         iv_register_back = (ImageView) findViewById(R.id.iv_register_back);
@@ -78,6 +80,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         cb_login_commitid.setOnClickListener(this);
         cb_login_commitlogin = (CheckBox) findViewById(R.id.cb_login_commitlogin);
         cb_login_commitlogin.setOnClickListener(this);
+        et_register_idcard = (EditText) findViewById(R.id.et_register_idcard);
     }
 
     @Override
@@ -102,6 +105,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                 break;
         }
     }
+
     //初始化必填项
     private void submit() {
         // validate
@@ -179,6 +183,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         String pwsd = et_register_pwsd.getText().toString().trim();
         String name = et_register_name.getText().toString().trim();
         String invitationcode = et_register_invitationcode.getText().toString().trim();
+        String idcode = et_register_idcard.getText().toString().trim();//获取身份证号码   todo
 
         Map<String, String> stringMap = new HashMap<>();
         stringMap.put("deviceId", deviceId);
@@ -189,6 +194,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         stringMap.put("code", authcode);
         stringMap.put("password", pwsd);
         stringMap.put("username", name);
+        stringMap.put("idCard",idcode);
         stringMap.put("activeCode", invitationcode);
         RetrofitUtil.getInstance().register(stringMap, new Observer<LoginBean>() {
             @Override
@@ -209,10 +215,9 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                     MANService manService = MANServiceProvider.getService();
                     // 注册用户埋点
                     manService.getMANAnalytics().userRegister(et_register_code.getText().toString().trim());
-                    //保存账号。密码。返回的url
+                    //保存账号。密码。
                     UserCentre.getInstance().setUserAccounts(et_register_code.getText().toString().trim());
                     UserCentre.getInstance().setUserPwd(et_register_pwsd.getText().toString().trim());
-                    UserCentre.getInstance().setUrl(value.getResult());
                     //登录点击跳转逻辑在此
                     Intent intent = new Intent(RegisterActivity.this, WebViewActivity.class);
                     startActivity(intent);
@@ -233,6 +238,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             }
         });
     }
+
     //手机实体键 返回键得操作
     @Override
     public void onBackPressed() {
@@ -240,4 +246,5 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         startActivity(intent);
         finish();
     }
+
 }

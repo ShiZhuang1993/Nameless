@@ -22,10 +22,11 @@
             android:textSize="23sp" />
 
         <TextView
+            android:id="@+id/tv_webview_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="主页"
+            android:text="燕氏姓名学习"
             android:textColor="@color/colorwhite"
             android:textSize="23sp" />
 

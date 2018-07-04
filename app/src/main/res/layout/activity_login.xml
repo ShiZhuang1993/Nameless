@@ -151,6 +151,7 @@
                 android:textSize="20sp" />
 
             <EditText
+                android:maxLength="6"
                 android:id="@+id/et_login_authcode"
                 android:layout_width="110dp"
                 android:layout_height="45dp"
@@ -191,6 +192,7 @@
             android:textSize="20sp" />
 
         <EditText
+            android:maxLength="20"
             android:id="@+id/et_login_pwsd"
             android:layout_width="210dp"
             android:layout_height="45dp"

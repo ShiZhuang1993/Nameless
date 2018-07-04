@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -235,7 +234,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     manService.getMANAnalytics().updateUserAccount("用戶--" + type + "--", et_login_code.getText().toString().trim());
                     //判断状态
                     if (!remember_accounts) {
-                        //保存账号。密码。返回的url
+                        //保存账号。密码。
                         UserCentre.getInstance().setUserAccounts(et_login_code.getText().toString().trim());
                         UserCentre.getInstance().setUserPwd(et_login_pwsd.getText().toString().trim());
                     } else {
@@ -248,7 +247,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         intent.putExtra("type", type + "");
                         intent.putExtra("url", value.getResult());
                         startActivity(intent);
-                        Toast.makeText(LoginActivity.this, "0", Toast.LENGTH_SHORT).show();
                         finish();
                     } else {
                         //登录点击跳转逻辑在此

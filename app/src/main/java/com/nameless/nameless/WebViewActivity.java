@@ -1,6 +1,7 @@
 package com.nameless.nameless;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -20,7 +21,6 @@ import com.alibaba.sdk.android.man.MANService;
 import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.http.NetworkUtils;
 import com.nameless.nameless.http.RetrofitUtil;
-import com.nameless.nameless.login.LoginActivity;
 import com.nameless.nameless.login.bean.LoginBean;
 import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
@@ -31,10 +31,12 @@ import com.nameless.nameless.utils.MobileIdentification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.logging.Logger;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 import me.leefeng.promptlibrary.PromptDialog;
+
 /**
  * ===================================
  * describe:主页面
@@ -49,6 +51,8 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private ImageView iv_main_share;
     private TextView tv_webview_exit;
     private PromptDialog promptDialog;
+    private String url;
+    private TextView tv_webview_title;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +73,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         tv_webview_exit.setVisibility(View.GONE);
         promptDialog = new PromptDialog(this);
         promptDialog.showLoading("加载中...");
+        tv_webview_title = (TextView) findViewById(R.id.tv_webview_title);
     }
 
     //webview初始化数据   逻辑
@@ -98,14 +103,21 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
         }
         webView.setWebViewClient(new WebViewClient() {
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
+                    view.loadUrl(url);
                 return true;
+            }
+
+            @Override
+            public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+                super.doUpdateVisitedHistory(view, url, isReload);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                tv_webview_title.setText(view.getTitle());
                 if (NetworkUtils.isNetworkAvailable(WebViewActivity.this)) {
                     promptDialog.showSuccess("加载成功");
                 } else {
@@ -137,7 +149,8 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
         String code = UserCentre.getInstance().getAccounts();
         String pwd = UserCentre.getInstance().getPwd();
-        Log.e("-----------", "账号：" + code + "密码：" + pwd);
+        Log.e("----------所有数据---------", "devucrid---" + deviceId + "随机数---" + nonce + "时间戳---" + timestamp
+                + "MD5---" + accessToken + "账号---" + code + "密码---" + pwd);
         Map<String, String> stringMap = new HashMap<>();
         stringMap.put("deviceId", deviceId);
         stringMap.put("nonce", nonce + "");
@@ -154,8 +167,9 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             public void onNext(LoginBean value) {
                 if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
                     webView.loadUrl(value.getResult());
-                    Log.e("----------", value.getResult());
+                    url = value.getShare_url();
                 } else {
+                    promptDialog.showError("加载失败");
                 }
             }
 
@@ -204,7 +218,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             case R.id.iv_main_share:
                 Intent textIntent = new Intent(Intent.ACTION_SEND);
                 textIntent.setType("text/plain");
-                textIntent.putExtra(Intent.EXTRA_TEXT, UserCentre.getInstance().geturl());
+                textIntent.putExtra(Intent.EXTRA_TEXT, url);
                 startActivity(Intent.createChooser(textIntent, "分享"));
                 break;
             case R.id.tv_webview_exit://退出按钮 目前隐藏  todo
@@ -232,4 +246,5 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         MANService manService = MANServiceProvider.getService();
         manService.getMANPageHitHelper().pageAppear(this);
     }
+
 }
