@@ -3,6 +3,7 @@ package com.nameless.nameless;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
@@ -15,10 +16,24 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alibaba.sdk.android.man.MANService;
+import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.http.NetworkUtils;
 import com.nameless.nameless.http.RetrofitUtil;
+import com.nameless.nameless.login.LoginActivity;
+import com.nameless.nameless.login.bean.LoginBean;
+import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
+import com.nameless.nameless.utils.DateUtils;
+import com.nameless.nameless.utils.MD5Pwd;
+import com.nameless.nameless.utils.MobileIdentification;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
+
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import me.leefeng.promptlibrary.PromptDialog;
 
 public class WebViewActivity extends AppCompatActivity implements View.OnClickListener {
@@ -88,7 +103,20 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NARROW_COLUMNS);// 排版适应屏幕
         //可以访问的文件
         settings.setAllowFileAccess(true);
+        String types = getIntent().getStringExtra("type");
+        Log.e("----type--------", types + "");
+        if (types != null && !types.equals("")) {
+            if (types.equals("0")) {
+                String url = getIntent().getStringExtra("url");
+                webView.loadUrl(url);
+            } else {
+                getLogin(1);
+            }
 
+        } else {
+            getLogin(1);
+
+        }
         webView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 view.loadUrl(url);
@@ -111,54 +139,42 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 promptDialog.showError("加载失败");
             }
         });
-        String geturl = UserCentre.getInstance().geturl();
-        webView.loadUrl(geturl);
+
 
     }
 
-
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.iv_main_share:
-                Intent textIntent = new Intent(Intent.ACTION_SEND);
-                textIntent.setType("text/plain");
-                textIntent.putExtra(Intent.EXTRA_TEXT,  UserCentre.getInstance().geturl());
-                startActivity(Intent.createChooser(textIntent, "分享"));
-                break;
-            case R.id.tv_webview_exit:
-                UserCentre.getInstance().clear();
-                finish();
-                break;
-        }
-    }
-
-}
-/*
     //登陆请求数据
     public void getLogin(int type) {
+        //手机唯一标识
+        String deviceId = MobileIdentification.getIMEI(this);
+        //随机数生成
+        Random rand = new Random();
+        int nonce = rand.nextInt(100);
+        //获取当前时间戳
+        DateUtils date = new DateUtils();
+        String timestamp = date.getTime();
+        //token MD5加密生成
+        String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
         String code = UserCentre.getInstance().getAccounts();
         String pwd = UserCentre.getInstance().getPwd();
-        Toast.makeText(this, "账号：" + code + "密码：" + pwd, Toast.LENGTH_SHORT).show();
-
+        Log.e("-----------", "账号：" + code + "密码：" + pwd);
         Map<String, String> stringMap = new HashMap<>();
+        stringMap.put("deviceId", deviceId);
+        stringMap.put("nonce", nonce + "");
+        stringMap.put("timestamp", timestamp);
+        stringMap.put("accessToken", accessToken);
         stringMap.put("telephone", code);
         stringMap.put("password", pwd);
         RetrofitUtil.getInstance().login(stringMap, type, new Observer<LoginBean>() {
             @Override
             public void onSubscribe(Disposable d) {
-
             }
 
             @Override
             public void onNext(LoginBean value) {
-                if (value.getStatus().getCode().equals("SUCCESS")) {
-      */
-/*  Intent intent = getIntent();
-        String url = intent.getStringExtra("url");*//*
-
+                if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
                     webView.loadUrl(value.getResult());
+                    Log.e("----------", value.getResult());
                 } else {
                 }
             }
@@ -173,4 +189,41 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
             }
         });
-    }*/
+
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.iv_main_share:
+                Intent textIntent = new Intent(Intent.ACTION_SEND);
+                textIntent.setType("text/plain");
+                textIntent.putExtra(Intent.EXTRA_TEXT, UserCentre.getInstance().geturl());
+                startActivity(Intent.createChooser(textIntent, "分享"));
+                break;
+            case R.id.tv_webview_exit://退出按钮 目前隐藏  todo
+                UserCentre.getInstance().clear();
+                //阿里云统计
+                MANService manService = MANServiceProvider.getService();
+                // 用户注销埋点
+                manService.getMANAnalytics().updateUserAccount("", "");
+                finish();
+                break;
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MANService manService = MANServiceProvider.getService();
+        manService.getMANPageHitHelper().pageDisAppear(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MANService manService = MANServiceProvider.getService();
+        manService.getMANPageHitHelper().pageAppear(this);
+    }
+
+}

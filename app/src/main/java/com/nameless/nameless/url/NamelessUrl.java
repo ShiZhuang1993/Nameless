@@ -9,5 +9,5 @@ package com.nameless.nameless.url;
  */
 
 public class NamelessUrl {
-    public static final String NAMELESS_URL="http://192.168.10.100:8080/user/";
+    public static final String NAMELESS_URL="http://122.114.0.27:8888/user/";
 }

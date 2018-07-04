@@ -12,16 +12,23 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.alibaba.sdk.android.man.MANService;
+import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.R;
 import com.nameless.nameless.WebViewActivity;
 import com.nameless.nameless.http.RetrofitUtil;
 import com.nameless.nameless.login.bean.EvaluteBean;
 import com.nameless.nameless.login.bean.LoginBean;
+import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
 import com.nameless.nameless.utils.CountDownUtils;
+import com.nameless.nameless.utils.DateUtils;
+import com.nameless.nameless.utils.MD5Pwd;
+import com.nameless.nameless.utils.MobileIdentification;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
@@ -44,8 +51,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private EditText et_register_name;
     private EditText et_register_invitationcode;
     private Button bt_register;
-    //判断成功失败的标识
-    private String SUCCESS = "SUCCESS";
     private CheckBox cb_login_commitid;
     private CheckBox cb_login_commitlogin;
 
@@ -91,6 +96,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                 getSendcode();
                 break;
             case R.id.iv_register_back:
+                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+                startActivity(intent);
                 finish();
                 break;
         }
@@ -118,11 +125,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             Toast.makeText(this, "优先输入新姓名", Toast.LENGTH_SHORT).show();
             return;
         }
-        String invitationcode = et_register_invitationcode.getText().toString().trim();
-        if (TextUtils.isEmpty(invitationcode)) {
-            Toast.makeText(this, "请向您师傅索要", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
         //注册
         getRegister();
@@ -141,8 +143,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void onNext(EvaluteBean value) {
                 String stringCode = value.getStatus().getCode();
-                if (stringCode.equals(SUCCESS)) {
-                    Toast.makeText(RegisterActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
+                if (stringCode.equals(MyConfig.SUCCESS)) {
                 } else {
                     Toast.makeText(RegisterActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
                 }
@@ -162,12 +163,28 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
     //请求数据
     private void getRegister() {
+        //手机唯一标识
+        String deviceId = MobileIdentification.getIMEI(this);
+        //随机数生成
+        Random rand = new Random();
+        int nonce = rand.nextInt();
+        //获取当前时间戳
+        DateUtils date = new DateUtils();
+        String timestamp = date.getTime();
+        //token MD5加密生成
+        String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
+
         String code = et_register_code.getText().toString().trim();
         String authcode = et_register_authcode.getText().toString().trim();
         String pwsd = et_register_pwsd.getText().toString().trim();
         String name = et_register_name.getText().toString().trim();
         String invitationcode = et_register_invitationcode.getText().toString().trim();
+
         Map<String, String> stringMap = new HashMap<>();
+        stringMap.put("deviceId", deviceId);
+        stringMap.put("nonce", nonce + "");
+        stringMap.put("timestamp", timestamp);
+        stringMap.put("accessToken", accessToken);
         stringMap.put("telephone", code);
         stringMap.put("code", authcode);
         stringMap.put("password", pwsd);
@@ -182,18 +199,20 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             @Override
             public void onNext(LoginBean value) {
                 String stringCode = value.getStatus().getCode();
-                if (stringCode.equals(SUCCESS)) {
+                if (stringCode.equals(MyConfig.SUCCESS)) {
+                    //登陆成功后保存状态
                     boolean remember_accounts = cb_login_commitid.isChecked();
                     boolean auto_login = cb_login_commitlogin.isChecked();
                     UserCentre.getInstance().setRememberAccounts(remember_accounts);
                     UserCentre.getInstance().setAutoLogin(auto_login);
-                    if (!remember_accounts) {
-                        UserCentre.getInstance().setUserAccounts(et_register_code.getText().toString().trim());
-                        UserCentre.getInstance().setUserPwd(et_register_pwsd.getText().toString().trim());
-                    } else {
-                        UserCentre.getInstance().clearAccounts();
-                        UserCentre.getInstance().clearPwd();
-                    }
+                    //阿里云注册统计
+                    MANService manService = MANServiceProvider.getService();
+                    // 注册用户埋点
+                    manService.getMANAnalytics().userRegister(et_register_code.getText().toString().trim());
+                    //保存账号。密码。返回的url
+                    UserCentre.getInstance().setUserAccounts(et_register_code.getText().toString().trim());
+                    UserCentre.getInstance().setUserPwd(et_register_pwsd.getText().toString().trim());
+                    UserCentre.getInstance().setUrl(value.getResult());
                     //登录点击跳转逻辑在此
                     Intent intent = new Intent(RegisterActivity.this, WebViewActivity.class);
                     startActivity(intent);
@@ -213,5 +232,12 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

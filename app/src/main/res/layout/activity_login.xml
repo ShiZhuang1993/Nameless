@@ -25,7 +25,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="登陆"
+            android:text="登录"
             android:textColor="@color/colorwhite"
             android:textSize="23sp" />
 
@@ -50,7 +50,7 @@
                 android:background="#00000000"
                 android:button="@null"
                 android:checked="true"
-                android:text="账号密码登陆"
+                android:text="帐号密码登录"
                 android:textColor="@drawable/textcolor_selector"
                 android:textSize="22sp" />
 
@@ -122,7 +122,7 @@
             android:layout_height="45dp"
             android:layout_marginLeft="5dp"
             android:background="@null"
-            android:hint="请输入账号"
+            android:hint="请输入手机号"
             android:inputType="number"
             android:maxLength="11" />
     </LinearLayout>
@@ -207,7 +207,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="20dp"
         android:background="@color/colororange"
-        android:text="登陆"
+        android:text="登录"
         android:textColor="@color/colorwhite"
         android:textSize="23sp" />
 
@@ -218,7 +218,7 @@
         android:layout_gravity="center"
         android:layout_marginTop="30dp"
         android:padding="10dp"
-        android:text="如果还没有账号，请先注册 > >"
+        android:text="如果还没有帐号，请先注册 > >"
         android:textColor="@color/colororange"
         android:textSize="18sp" />
 

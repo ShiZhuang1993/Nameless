@@ -17,16 +17,23 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.nameless.nameless.WebViewActivity;
+import com.alibaba.sdk.android.man.MANService;
+import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.R;
+import com.nameless.nameless.WebViewActivity;
 import com.nameless.nameless.http.RetrofitUtil;
 import com.nameless.nameless.login.bean.EvaluteBean;
 import com.nameless.nameless.login.bean.LoginBean;
+import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
 import com.nameless.nameless.utils.CountDownUtils;
+import com.nameless.nameless.utils.DateUtils;
+import com.nameless.nameless.utils.MD5Pwd;
+import com.nameless.nameless.utils.MobileIdentification;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
@@ -55,8 +62,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     private LinearLayout ll_login_pwsd;
     private Button bt_login_authcode;
     private EditText et_login_authcode;
-    //判断成功失败的标识
-    private String SUCCESS = "SUCCESS";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +70,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_login);
         initView();
         initData();
+
     }
 
     private void initView() {
@@ -109,6 +115,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         ll_login_pwsd.setVisibility(View.VISIBLE);
                         ll_login_authcode.setVisibility(View.GONE);
                         et_login_code.setText("");
+                        et_login_pwsd.setText("");
                         bt_login.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -122,6 +129,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         ll_login_pwsd.setVisibility(View.GONE);
                         ll_login_authcode.setVisibility(View.VISIBLE);
                         et_login_code.setText("");
+                        et_login_authcode.setText("");
                         bt_login.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -135,61 +143,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private void initData() {
+        String pwd = UserCentre.getInstance().getPwd();
         boolean autoLogin = UserCentre.getInstance().getAutoLogin();
-        if (autoLogin) {
-            Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
-            startActivity(intent);
-            finish();
-            return;
+        if (pwd != null && !pwd.equals("")) {
+            if (autoLogin) {
+                Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        } else {
+         et_login_code.setText("");
         }
-    }
-
-    //登陆请求数据
-    public void getLogin( int type) {
-        Map<String, String> stringMap = new HashMap<>();
-        stringMap.put("telephone", et_login_code.getText().toString().trim());
-        stringMap.put("password", et_login_pwsd.getText().toString().trim());
-        RetrofitUtil.getInstance().login(stringMap, type, new Observer<LoginBean>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-
-            }
-
-            @Override
-            public void onNext(LoginBean value) {
-                if (value.getStatus().getCode().equals(SUCCESS)) {
-                    boolean remember_accounts = cb_login_commitid.isChecked();
-                    boolean auto_login = cb_login_commitlogin.isChecked();
-                    UserCentre.getInstance().setRememberAccounts(remember_accounts);
-                    UserCentre.getInstance().setAutoLogin(auto_login);
-                    if (!remember_accounts) {
-                        UserCentre.getInstance().setUserAccounts(et_login_code.getText().toString().trim());
-                        UserCentre.getInstance().setUserPwd(et_login_pwsd.getText().toString().trim());
-                        UserCentre.getInstance().setUrl(value.getResult());
-                    } else {
-                        UserCentre.getInstance().clearAccounts();
-                        UserCentre.getInstance().clearPwd();
-                    }
-                    //登录点击跳转逻辑在此
-                    Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
-                    startActivity(intent);
-                    finish();
-
-                } else {
-                    Toast.makeText(LoginActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                Toast.makeText(LoginActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });
     }
 
     private void submitOne() {
@@ -205,7 +169,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             Toast.makeText(this, "请输入密码", Toast.LENGTH_SHORT).show();
             return;
         }
-        getLogin(1);
+        getLogin(1, pwsd);
 
 
     }
@@ -223,7 +187,86 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             Toast.makeText(this, "请输入验证码", Toast.LENGTH_SHORT).show();
             return;
         }
-        getLogin( 0);
+        getLogin(0, authcode);
+    }
+
+    //登陆请求数据
+    public void getLogin(final int type, final String pwd) {
+        //手机唯一标识
+        String deviceId = MobileIdentification.getIMEI(this);
+        //随机数生成
+        Random rand = new Random();
+        int nonce = rand.nextInt(100);
+        //获取当前时间戳
+        DateUtils date = new DateUtils();
+        String timestamp = date.getTime();
+        //token MD5加密生成
+        String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
+
+        Map<String, String> stringMap = new HashMap<>();
+        stringMap.put("deviceId", deviceId);
+        stringMap.put("nonce", nonce + "");
+        stringMap.put("timestamp", timestamp);
+        stringMap.put("accessToken", accessToken);
+        stringMap.put("telephone", et_login_code.getText().toString().trim());
+        stringMap.put("password", pwd);
+        RetrofitUtil.getInstance().login(stringMap, type, new Observer<LoginBean>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(LoginBean value) {
+                if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
+                    //登陆成功后保存状态
+                    boolean remember_accounts = cb_login_commitid.isChecked();
+                    boolean auto_login = cb_login_commitlogin.isChecked();
+                    UserCentre.getInstance().setRememberAccounts(remember_accounts);
+                    UserCentre.getInstance().setAutoLogin(auto_login);
+                    //阿里云统计
+                    MANService manService = MANServiceProvider.getService();
+                    // 用户登录埋点
+                    manService.getMANAnalytics().updateUserAccount("用戶--" + type + "--", et_login_code.getText().toString().trim());
+                    //判断状态
+                    if (!remember_accounts) {
+                        //保存账号。密码。返回的url
+                        UserCentre.getInstance().setUserAccounts(et_login_code.getText().toString().trim());
+                        UserCentre.getInstance().setUserPwd(et_login_pwsd.getText().toString().trim());
+                    } else {
+                        UserCentre.getInstance().clearAccounts();
+                        UserCentre.getInstance().clearPwd();
+                    }
+                    if (type == 0) {
+                        //登录点击跳转逻辑在此
+                        Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
+                        intent.putExtra("type", type + "");
+                        intent.putExtra("url", value.getResult());
+                        startActivity(intent);
+                        Toast.makeText(LoginActivity.this, "0", Toast.LENGTH_SHORT).show();
+                        finish();
+                    } else {
+                        //登录点击跳转逻辑在此
+                        Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
+                        intent.putExtra("type", type + "");
+                        startActivity(intent);
+                        finish();
+                    }
+                } else {
+                    Toast.makeText(LoginActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Toast.makeText(LoginActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
     }
 
     @Override
@@ -235,6 +278,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             case R.id.te_register:
                 Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
                 startActivity(intent);
+                finish();
                 break;
             case R.id.bt_login_authcode:
                 String code = et_login_code.getText().toString().trim();
@@ -260,8 +304,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             @Override
             public void onNext(EvaluteBean value) {
                 String stringCode = value.getStatus().getCode();
-                if (stringCode.equals(SUCCESS)) {
-                    Toast.makeText(LoginActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
+                if (stringCode.equals(MyConfig.SUCCESS)) {
                 } else {
                     Toast.makeText(LoginActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
                 }

@@ -1,5 +1,5 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
-
+apply from: "config.gradle"
 buildscript {
     
     repositories {
@@ -20,6 +20,10 @@ allprojects {
         google()
         jcenter()
         maven { url 'https://jitpack.io' }
+        //阿里云统计
+        maven {
+            url 'http://maven.aliyun.com/nexus/content/repositories/releases/'
+        }
     }
 }
 
