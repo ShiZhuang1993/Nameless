@@ -54,6 +54,8 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private TextView tv_webview_exit;
     private PromptDialog promptDialog;
     private TextView tv_webview_title;
+    private String urls;
+    private String backurl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,6 +136,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             public void doUpdateVisitedHistory(WebView view, final String url, boolean isReload) {
                 super.doUpdateVisitedHistory(view, url, isReload);
                 Log.e("-----url__titlt----", view.getTitle() + "---" + view.getOriginalUrl());
+                backurl = url;
                 if (url.indexOf("detail") != -1) {
                     iv_main_share.setVisibility(View.VISIBLE);
                     iv_main_share.setOnClickListener(new View.OnClickListener() {
@@ -157,7 +160,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                         public void onClick(View view) {
                             Intent textIntent = new Intent(Intent.ACTION_SEND);
                             textIntent.setType("text/plain");
-                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            textIntent.putExtra(Intent.EXTRA_TEXT, urls);
                             startActivity(Intent.createChooser(textIntent, "分享"));
                         }
                     });
@@ -220,6 +223,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             public void onNext(LoginBean value) {
                 if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
                     webView.loadUrl(value.getResult());
+                    urls = value.getShare_url();
                 } else {
                     promptDialog.showError("加载失败");
                 }
@@ -268,10 +272,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        } else {
+        if (backurl.indexOf("study") != -1 | backurl.indexOf("my") != -1) {
             // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
             if (System.currentTimeMillis() - exitTime > 2000) {
                 Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
@@ -281,6 +282,10 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             } else {
                 finish();
             }
+        }
+        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+            webView.goBack();
+            return true;
         }
         return super.onKeyDown(keyCode, event);
     }
