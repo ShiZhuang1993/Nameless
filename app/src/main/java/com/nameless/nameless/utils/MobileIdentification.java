@@ -15,13 +15,19 @@ import android.telephony.TelephonyManager;
 public class MobileIdentification {
     /**
      * 获取手机IMEI号
-     *
+     * <p>
      * 需要动态权限: android.permission.READ_PHONE_STATE
      */
+    @SuppressLint("MissingPermission")
     public static String getIMEI(Context context) {
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(context.TELEPHONY_SERVICE);
-        @SuppressLint("MissingPermission") String imei = telephonyManager.getDeviceId();
 
+        String imei = null;
+        try {
+            TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(context.TELEPHONY_SERVICE);
+            imei = telephonyManager.getDeviceId();
+        } catch (Exception e) {
+
+        }
         return imei;
     }
 

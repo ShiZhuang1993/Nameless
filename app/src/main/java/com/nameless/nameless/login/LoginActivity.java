@@ -1,11 +1,16 @@
 package com.nameless.nameless.login;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.Window;
+import android.webkit.JsResult;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -67,9 +72,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
         initView();
         initData();
-
     }
 
     //初始化布局
@@ -158,7 +167,23 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         }
     }
 
-    //账号密码 必填项判断
+    //账号 验证码  必填项判断
+    private void submitTwo() {
+        // validate
+        String code = et_login_code.getText().toString().trim();
+        if (TextUtils.isEmpty(code)) {
+            Toast.makeText(this, "请输入手机号", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String authcode = et_login_authcode.getText().toString().trim();
+        if (TextUtils.isEmpty(authcode)) {
+            Toast.makeText(this, "请输入验证码", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        getLogin(0, authcode);
+    }    //账号密码 必填项判断
+
     private void submitOne() {
         // validate
         String code = et_login_code.getText().toString().trim();
@@ -177,27 +202,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
-    //账号 验证码  必填项判断
-    private void submitTwo() {
-        // validate
-        String code = et_login_code.getText().toString().trim();
-        if (TextUtils.isEmpty(code)) {
-            Toast.makeText(this, "请输入手机号", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String authcode = et_login_authcode.getText().toString().trim();
-        if (TextUtils.isEmpty(authcode)) {
-            Toast.makeText(this, "请输入验证码", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        getLogin(0, authcode);
-    }
 
     //登陆请求数据
     public void getLogin(final int type, final String pwd) {
         //手机唯一标识
         String deviceId = MobileIdentification.getIMEI(this);
+        if (deviceId == null) {
+            getDialog("您拒绝权限申请，此功能将不能正常使用，您可以去设置页面重新授权").show();
+            return;
+        }
         //随机数生成
         Random rand = new Random();
         int nonce = rand.nextInt(100);
@@ -237,10 +250,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         //保存账号。密码。
                         UserCentre.getInstance().setUserAccounts(et_login_code.getText().toString().trim());
                         UserCentre.getInstance().setUserPwd(et_login_pwsd.getText().toString().trim());
-                    } else {
-                        UserCentre.getInstance().clearAccounts();
-                        UserCentre.getInstance().clearPwd();
                     }
+
                     if (type == 0) {
                         //登录点击跳转逻辑在此
                         Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
@@ -256,6 +267,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         finish();
                     }
                 } else {
+                    UserCentre.getInstance().clearPwd();
                     Toast.makeText(LoginActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -325,4 +337,26 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         });
     }
 
+    //对话框
+    private AlertDialog.Builder getDialog(String message) {
+        AlertDialog.Builder s = new AlertDialog.Builder(LoginActivity.this)
+                .setMessage(message)
+                .setPositiveButton("设置权限", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent();
+                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.fromParts("package", getPackageName(), null));
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        return s;
+    }
 }

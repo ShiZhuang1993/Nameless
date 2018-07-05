@@ -1,13 +1,16 @@
 package com.nameless.nameless;
 
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
+import android.webkit.JsResult;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
@@ -31,7 +34,6 @@ import com.nameless.nameless.utils.MobileIdentification;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
@@ -101,48 +103,13 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             getLogin(1);
 
         }
+
+        //捕捉 html中点击过的链接
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    view.loadUrl(url);
+                view.loadUrl(url);
                 return true;
-            }
-
-            @Override
-            public void doUpdateVisitedHistory(WebView view, final String url, boolean isReload) {
-                super.doUpdateVisitedHistory(view, url, isReload);
-                if (url.indexOf("detail") != -1){
-                    iv_main_share.setVisibility(View.VISIBLE);
-                    iv_main_share.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Intent textIntent = new Intent(Intent.ACTION_SEND);
-                            textIntent.setType("text/plain");
-                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
-                            startActivity(Intent.createChooser(textIntent, "分享"));
-                        }
-                    });
-
-                    return;
-                }else {
-                    iv_main_share.setVisibility(View.GONE);
-                }
-                if (url.indexOf("share") != -1){
-                    iv_main_share.setVisibility(View.VISIBLE);
-                    iv_main_share.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            Intent textIntent = new Intent(Intent.ACTION_SEND);
-                            textIntent.setType("text/plain");
-                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
-                            startActivity(Intent.createChooser(textIntent, "分享"));
-                        }
-                    });
-
-                    return;
-                }else {
-                    iv_main_share.setVisibility(View.GONE);
-                }
             }
 
             @Override
@@ -161,9 +128,64 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 super.onReceivedError(view, request, error);
                 promptDialog.showError("加载失败");
             }
+
+            //捕捉 html中点击过的链接
+            @Override
+            public void doUpdateVisitedHistory(WebView view, final String url, boolean isReload) {
+                super.doUpdateVisitedHistory(view, url, isReload);
+                Log.e("-----url__titlt----", view.getTitle() + "---" + view.getOriginalUrl());
+                if (url.indexOf("detail") != -1) {
+                    iv_main_share.setVisibility(View.VISIBLE);
+                    iv_main_share.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent textIntent = new Intent(Intent.ACTION_SEND);
+                            textIntent.setType("text/plain");
+                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            startActivity(Intent.createChooser(textIntent, "分享"));
+                        }
+                    });
+
+                    return;
+                } else {
+                    iv_main_share.setVisibility(View.GONE);
+                }
+                if (url.indexOf("share") != -1) {
+                    iv_main_share.setVisibility(View.VISIBLE);
+                    iv_main_share.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            Intent textIntent = new Intent(Intent.ACTION_SEND);
+                            textIntent.setType("text/plain");
+                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            startActivity(Intent.createChooser(textIntent, "分享"));
+                        }
+                    });
+
+                    return;
+                } else {
+                    iv_main_share.setVisibility(View.GONE);
+                }
+            }
         });
-
-
+        //修改html中弹出对话框的内容
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onJsConfirm(WebView view, String url, final String message, final JsResult result) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        getDialog(message, result).show().setOnCancelListener(new DialogInterface.OnCancelListener() {
+                            @Override
+                            public void onCancel(DialogInterface dialog) {
+                                result.cancel();
+                            }
+                        });
+                    }
+                });
+                return true;
+            }
+        });
     }
 
     //登陆请求数据
@@ -180,8 +202,8 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
         String code = UserCentre.getInstance().getAccounts();
         String pwd = UserCentre.getInstance().getPwd();
-        Log.e("----------所有数据---------", "devucrid---" + deviceId + "随机数---" + nonce + "时间戳---" + timestamp
-                + "MD5---" + accessToken + "账号---" + code + "密码---" + pwd);
+        Log.e("----------所有数据---------", "devucrid---" + deviceId + "---随机数---" + nonce + "---时间戳---" + timestamp
+                + "---MD5---" + accessToken + "---账号---" + code + "---密码---" + pwd);
         Map<String, String> stringMap = new HashMap<>();
         stringMap.put("deviceId", deviceId);
         stringMap.put("nonce", nonce + "");
@@ -216,6 +238,27 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
+    //对话框
+    private AlertDialog.Builder getDialog(String message, final JsResult result) {
+        AlertDialog.Builder s = new AlertDialog.Builder(WebViewActivity.this)
+                .setTitle("提示")
+                .setMessage(message)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        result.confirm();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        result.cancel();
+                    }
+                });
+
+        return s;
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -242,20 +285,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.tv_webview_exit://退出按钮 目前隐藏  todo
-                UserCentre.getInstance().clear();
-                //阿里云统计
-                MANService manService = MANServiceProvider.getService();
-                // 用户注销埋点
-                manService.getMANAnalytics().updateUserAccount("", "");
-                finish();
-                break;
-        }
-    }
-
     //阿里云手动埋点
     @Override
     protected void onPause() {
@@ -270,5 +299,20 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         MANService manService = MANServiceProvider.getService();
         manService.getMANPageHitHelper().pageAppear(this);
     }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.tv_webview_exit://退出按钮 目前隐藏  todo
+                UserCentre.getInstance().clear();
+                //阿里云统计
+                MANService manService = MANServiceProvider.getService();
+                // 用户注销埋点
+                manService.getMANAnalytics().updateUserAccount("", "");
+                finish();
+                break;
+        }
+    }
+
 
 }

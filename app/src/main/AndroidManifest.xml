@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.nameless.nameless">
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.GET_TASKS"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_SETTINGS"/>
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <application
         android:name=".init.NamelessApp"
         android:allowBackup="true"
@@ -26,7 +28,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".WebViewActivity" />
-        <activity android:name=".login.RegisterActivity"/>
+        <activity
+            android:name=".login.RegisterActivity"
+            android:windowSoftInputMode="adjustResize|adjustUnspecified|stateHidden" />
         <!--测试打包-->
         <meta-data
             android:name="CHANNEL"
@@ -34,11 +38,10 @@
 
         <meta-data
             android:name="com.alibaba.app.appkey"
-            android:value="24949126"/>
+            android:value="24949126" />
         <meta-data
             android:name="com.alibaba.app.appsecret"
-            android:value="db61033349a4738ad890b779cc1f6564"/>
-
+            android:value="db61033349a4738ad890b779cc1f6564" />
 
 
     </application>

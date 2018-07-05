@@ -25,6 +25,7 @@ import com.nameless.nameless.utils.CountDownUtils;
 import com.nameless.nameless.utils.DateUtils;
 import com.nameless.nameless.utils.MD5Pwd;
 import com.nameless.nameless.utils.MobileIdentification;
+import com.nameless.nameless.utils.RegexUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -129,7 +130,16 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             Toast.makeText(this, "优先输入新姓名", Toast.LENGTH_SHORT).show();
             return;
         }
-
+        String idcode = et_register_idcard.getText().toString().trim();
+        boolean byteIdCard = RegexUtils.ByteIdCard(idcode);
+        if (TextUtils.isEmpty(idcode)) {
+            Toast.makeText(this, "请输入身份证号", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (!byteIdCard) {
+            Toast.makeText(this, "请输入正确得身份证号码", Toast.LENGTH_SHORT).show();
+            return;
+        }
         //注册
         getRegister();
 
