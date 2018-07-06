@@ -43,6 +43,7 @@
     </RelativeLayout>
 
     <FrameLayout
+        android:background="#000000"
         android:id="@+id/video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">

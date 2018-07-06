@@ -146,7 +146,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                super.onReceivedError(view, request, error);
                 promptDialog.showError("加载失败");
             }
 
