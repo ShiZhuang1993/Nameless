@@ -31,7 +31,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 
 public class RetrofitUtil {
-    public static final int DEFAULT_TIMEOUT = 10;
+    public static final int DEFAULT_TIMEOUT = 1000;
     private Retrofit mRetrofit;
     private APIService mApiService;
     private static RetrofitUtil mInstance;
@@ -43,7 +43,7 @@ public class RetrofitUtil {
     private RetrofitUtil() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .cookieJar(new CookiesManager(NamelessApp.getContext()))
-                .cache(new Cache(new File(NamelessApp.getContext().getExternalCacheDir(), "kangso_cache"), 5 * 2024 * 1024))
+                .cache(new Cache(new File(NamelessApp.getContext().getExternalCacheDir(), "nameless"), 5 * 2024 * 1024))
                 .addInterceptor(cacheNetInterceptor)
                 .addNetworkInterceptor(cacheNetInterceptor)
                 .connectTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS);

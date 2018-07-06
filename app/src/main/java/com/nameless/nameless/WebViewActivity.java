@@ -2,6 +2,8 @@ package com.nameless.nameless;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -9,6 +11,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -16,7 +19,9 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -56,6 +61,10 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private TextView tv_webview_title;
     private String urls;
     private String backurl;
+    private MANService manService;
+    private FrameLayout video_view;
+    private MyWebChromeClient mMyWebChromeClient;
+    private RelativeLayout rll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +77,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
     //初始化布局
     private void initView() {
+        rll = (RelativeLayout) findViewById(R.id.rll);
         iv_main_share = (ImageView) findViewById(R.id.iv_main_share);
         iv_main_share.setOnClickListener(this);
         webView = (WebView) findViewById(R.id.webView);
@@ -77,10 +87,9 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         promptDialog = new PromptDialog(this);
         promptDialog.showLoading("加载中...");
         tv_webview_title = (TextView) findViewById(R.id.tv_webview_title);
-    }
-
-    //webview初始化数据   逻辑
-    private void initData() {
+        video_view = (FrameLayout) findViewById(R.id.video_view);
+        //实例化阿里云对象
+        manService = MANServiceProvider.getService();
         WebSettings settings = webView.getSettings();
         // 允许javascript的执行
         settings.setJavaScriptEnabled(true);
@@ -91,6 +100,17 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         settings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NARROW_COLUMNS);// 排版适应屏幕
         //可以访问的文件
         settings.setAllowFileAccess(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        settings.setPluginState(WebSettings.PluginState.ON);
+        settings.setAllowFileAccess(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+    }
+
+    //webview初始化数据   逻辑
+    private void initData() {
         String types = getIntent().getStringExtra("type");
         Log.e("----type--------", types + "");
         if (types != null && !types.equals("")) {
@@ -105,7 +125,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             getLogin(1);
 
         }
-
         //捕捉 html中点击过的链接
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -146,6 +165,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                             textIntent.setType("text/plain");
                             textIntent.putExtra(Intent.EXTRA_TEXT, url);
                             startActivity(Intent.createChooser(textIntent, "分享"));
+
                         }
                     });
 
@@ -172,23 +192,8 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             }
         });
         //修改html中弹出对话框的内容
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public boolean onJsConfirm(WebView view, String url, final String message, final JsResult result) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        getDialog(message, result).show().setOnCancelListener(new DialogInterface.OnCancelListener() {
-                            @Override
-                            public void onCancel(DialogInterface dialog) {
-                                result.cancel();
-                            }
-                        });
-                    }
-                });
-                return true;
-            }
-        });
+        mMyWebChromeClient = new MyWebChromeClient();
+        webView.setWebChromeClient(mMyWebChromeClient);
     }
 
     //登陆请求数据
@@ -242,6 +247,29 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+        switch (config.orientation) {
+            case Configuration.ORIENTATION_LANDSCAPE:
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                break;
+            case Configuration.ORIENTATION_PORTRAIT:
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+                break;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        RetrofitUtil.getInstance().destroy();
+        UserCentre.getInstance().destroy();
+        webView.destroy();
+    }
+
     //对话框
     private AlertDialog.Builder getDialog(String message, final JsResult result) {
         AlertDialog.Builder s = new AlertDialog.Builder(WebViewActivity.this)
@@ -263,46 +291,105 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         return s;
     }
 
+    //返回键操作
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        RetrofitUtil.getInstance().destroy();
-        UserCentre.getInstance().destroy();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (backurl.indexOf("study") != -1 | backurl.indexOf("my") != -1) {
+    public void onBackPressed() {
+        if (backurl != null) {
+            if (backurl.indexOf("study") != -1 | backurl.indexOf("my") != -1) {
+                // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
+                if (System.currentTimeMillis() - exitTime > 2000) {
+                    Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                    // 将系统当前的时间赋值给exitTime
+                    exitTime = System.currentTimeMillis();
+                    return;
+                } else {
+                    finish();
+                }
+            }
+        } else {
             // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
             if (System.currentTimeMillis() - exitTime > 2000) {
                 Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
                 // 将系统当前的时间赋值给exitTime
                 exitTime = System.currentTimeMillis();
-                return true;
+                return;
             } else {
                 finish();
             }
         }
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+        if (webView.canGoBack()) {
             webView.goBack();
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //阿里云手动埋点
+        manService.getMANPageHitHelper().pageDisAppear(this);
+        webView.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        manService.getMANPageHitHelper().pageAppear(this);
+        webView.onResume();
+    }
+
+    //自定义webview视频全屏  弹窗
+    private class MyWebChromeClient extends WebChromeClient {
+        private View mCustomView;
+        private CustomViewCallback mCustomViewCallback;
+
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+            super.onShowCustomView(view, callback);
+            if (mCustomView != null) {
+                callback.onCustomViewHidden();
+                return;
+            }
+            mCustomView = view;
+            video_view.addView(mCustomView);
+            mCustomViewCallback = callback;
+            webView.setVisibility(View.GONE);
+            rll.setVisibility(View.GONE);
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+
+        public void onHideCustomView() {
+            webView.setVisibility(View.VISIBLE);
+            rll.setVisibility(View.VISIBLE);
+            if (mCustomView == null) {
+                return;
+            }
+            mCustomView.setVisibility(View.GONE);
+
+            video_view.removeView(mCustomView);
+            mCustomViewCallback.onCustomViewHidden();
+            mCustomView = null;
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            super.onHideCustomView();
+        }
+
+        //自定义弹窗
+        @Override
+        public boolean onJsConfirm(WebView view, String url, final String message, final JsResult result) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getDialog(message, result).show().setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            result.cancel();
+                        }
+                    });
+                }
+            });
             return true;
         }
-        return super.onKeyDown(keyCode, event);
-    }
-
-    //阿里云手动埋点
-    @Override
-    protected void onPause() {
-        super.onPause();
-        MANService manService = MANServiceProvider.getService();
-        manService.getMANPageHitHelper().pageDisAppear(this);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        MANService manService = MANServiceProvider.getService();
-        manService.getMANPageHitHelper().pageAppear(this);
     }
 
     @Override
@@ -318,6 +405,35 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 break;
         }
     }
-
-
 }
+   /* @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (backurl != null) {
+            if (backurl.indexOf("study") != -1 | backurl.indexOf("my") != -1) {
+                // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
+                if (System.currentTimeMillis() - exitTime > 2000) {
+                    Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                    // 将系统当前的时间赋值给exitTime
+                    exitTime = System.currentTimeMillis();
+                    return true;
+                } else {
+                    finish();
+                }
+            }
+        } else {
+            // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
+            if (System.currentTimeMillis() - exitTime > 2000) {
+                Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
+                // 将系统当前的时间赋值给exitTime
+                exitTime = System.currentTimeMillis();
+                return true;
+            } else {
+                finish();
+            }
+        }
+        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
+            webView.goBack();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }*/

@@ -140,6 +140,11 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             Toast.makeText(this, "请输入正确得身份证号码", Toast.LENGTH_SHORT).show();
             return;
         }
+        String invitationcode = et_register_invitationcode.getText().toString().trim();
+        if (TextUtils.isEmpty(invitationcode)) {
+            Toast.makeText(this, "请输入邀请码", Toast.LENGTH_SHORT).show();
+            return;
+        }
         //注册
         getRegister();
 
