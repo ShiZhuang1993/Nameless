@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -65,7 +66,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private FrameLayout video_view;
     private MyWebChromeClient mMyWebChromeClient;
     private RelativeLayout rll;
-
+    private String title =null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -137,6 +138,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 tv_webview_title.setText(view.getTitle());
+                title=view.getTitle();
                 if (NetworkUtils.isNetworkAvailable(WebViewActivity.this)) {
                     promptDialog.showSuccess("加载成功");
                 } else {
@@ -163,6 +165,11 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                             Intent textIntent = new Intent(Intent.ACTION_SEND);
                             textIntent.setType("text/plain");
                             textIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            //todo 加图标和标题
+                            textIntent.putExtra(Intent.EXTRA_TITLE,title);
+                            textIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON,
+                                    Intent.ShortcutIconResource.fromContext(WebViewActivity.this,
+                                    R.mipmap.icon_s) );
                             startActivity(Intent.createChooser(textIntent, "分享"));
 
                         }
@@ -180,6 +187,11 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                             Intent textIntent = new Intent(Intent.ACTION_SEND);
                             textIntent.setType("text/plain");
                             textIntent.putExtra(Intent.EXTRA_TEXT, urls);
+                            //todo 加图标和标题
+                            textIntent.putExtra(Intent.EXTRA_TITLE,title);
+                            textIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON,
+                                    Intent.ShortcutIconResource.fromContext(WebViewActivity.this,
+                                            R.mipmap.icon_s) );
                             startActivity(Intent.createChooser(textIntent, "分享"));
                         }
                     });
