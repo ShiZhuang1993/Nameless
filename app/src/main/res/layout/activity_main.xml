@@ -23,6 +23,9 @@
             android:textSize="23sp" />
 
         <TextView
+            android:maxEms="8"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:id="@+id/tv_webview_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

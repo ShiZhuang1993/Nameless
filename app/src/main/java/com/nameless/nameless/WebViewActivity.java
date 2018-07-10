@@ -4,12 +4,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -66,7 +65,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private FrameLayout video_view;
     private MyWebChromeClient mMyWebChromeClient;
     private RelativeLayout rll;
-    private String title =null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -85,12 +84,13 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         tv_webview_exit = (TextView) findViewById(R.id.tv_webview_exit);
         tv_webview_exit.setOnClickListener(this);
         tv_webview_exit.setVisibility(View.GONE);
-        promptDialog = new PromptDialog(this);
-        promptDialog.showLoading("加载中...");
         tv_webview_title = (TextView) findViewById(R.id.tv_webview_title);
         video_view = (FrameLayout) findViewById(R.id.video_view);
+        //加载样式对话框实列
+        promptDialog = new PromptDialog(this);
         //实例化阿里云对象
         manService = MANServiceProvider.getService();
+        //webview相关设置
         WebSettings settings = webView.getSettings();
         // 允许javascript的执行
         settings.setJavaScriptEnabled(true);
@@ -103,16 +103,17 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         settings.setAllowFileAccess(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setPluginState(WebSettings.PluginState.ON);
-        settings.setAllowFileAccess(true);
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        //webview监听
+        getWebViewClient();
     }
 
     //webview初始化数据   逻辑
     private void initData() {
-        String types = getIntent().getStringExtra("type");
+        final String types = getIntent().getStringExtra("type");
         Log.e("----type--------", types + "");
         if (types != null && !types.equals("")) {
             if (types.equals("0")) {
@@ -126,6 +127,12 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             getLogin(1);
 
         }
+
+
+    }
+
+    //webview监听
+    private void getWebViewClient() {
         //捕捉 html中点击过的链接
         webView.setWebViewClient(new WebViewClient() {
             @Override
@@ -135,14 +142,19 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             }
 
             @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                promptDialog.showLoading("加载中...");
+            }
+
+            @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 tv_webview_title.setText(view.getTitle());
-                title=view.getTitle();
                 if (NetworkUtils.isNetworkAvailable(WebViewActivity.this)) {
                     promptDialog.showSuccess("加载成功");
                 } else {
-                    promptDialog.showError("加载失败");
+                    promptDialog.showError("请开启网络后重试");
                 }
             }
 
@@ -155,28 +167,20 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void doUpdateVisitedHistory(WebView view, final String url, boolean isReload) {
                 super.doUpdateVisitedHistory(view, url, isReload);
-                Log.e("-----url__titlt----", view.getTitle() + "---" + view.getOriginalUrl());
+                Log.e("=====url====", "=" + url);
                 backurl = url;
-                if (url.indexOf("detail") != -1) {
+                if (url.indexOf("caseAnalysis/detail") != -1) {
+                    //   tv_webview_title.setText(view.getTitle());
                     iv_main_share.setVisibility(View.VISIBLE);
                     iv_main_share.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            Intent textIntent = new Intent(Intent.ACTION_SEND);
-                            textIntent.setType("text/plain");
-                            textIntent.putExtra(Intent.EXTRA_TEXT, url);
-                            //todo 加图标和标题
-                            textIntent.putExtra(Intent.EXTRA_TITLE,title);
-                            textIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON,
-                                    Intent.ShortcutIconResource.fromContext(WebViewActivity.this,
-                                    R.mipmap.icon_s) );
-                            startActivity(Intent.createChooser(textIntent, "分享"));
-
+                            getShar(url);
                         }
                     });
-
                     return;
                 } else {
+                    // tv_webview_title.setText("燕氏姓名学习");
                     iv_main_share.setVisibility(View.GONE);
                 }
                 if (url.indexOf("share") != -1) {
@@ -184,15 +188,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                     iv_main_share.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            Intent textIntent = new Intent(Intent.ACTION_SEND);
-                            textIntent.setType("text/plain");
-                            textIntent.putExtra(Intent.EXTRA_TEXT, urls);
-                            //todo 加图标和标题
-                            textIntent.putExtra(Intent.EXTRA_TITLE,title);
-                            textIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON,
-                                    Intent.ShortcutIconResource.fromContext(WebViewActivity.this,
-                                            R.mipmap.icon_s) );
-                            startActivity(Intent.createChooser(textIntent, "分享"));
+                            getShar(urls);
                         }
                     });
 
@@ -241,13 +237,14 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                     webView.loadUrl(value.getResult());
                     urls = value.getShare_url();
                 } else {
+                    Toast.makeText(WebViewActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
                     promptDialog.showError("加载失败");
                 }
             }
 
             @Override
             public void onError(Throwable e) {
-                Toast.makeText(WebViewActivity.this, e.toString(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(WebViewActivity.this, "网络链接不可用，请稍后重试。", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -256,6 +253,15 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             }
         });
 
+    }
+
+    //分享
+    private void getShar(String url) {
+        Intent textIntent = new Intent(Intent.ACTION_SEND);
+        textIntent.setType("text/*");
+        textIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        textIntent.putExtra(Intent.EXTRA_TEXT, url);
+        startActivity(Intent.createChooser(textIntent, "燕氏姓名学习"));
     }
 
     @Override
@@ -354,6 +360,16 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private class MyWebChromeClient extends WebChromeClient {
         private View mCustomView;
         private CustomViewCallback mCustomViewCallback;
+        //获取title
+   /*     @Override
+        public void onReceivedTitle(WebView view, String title) {
+            super.onReceivedTitle(view, title);
+            if (backurl.indexOf("caseAnalysis/detail") != -1) {
+                tv_webview_title.setText(title);
+            } else {
+                tv_webview_title.setText("燕氏姓名学习");
+            }
+        }*/
 
         @Override
         public void onShowCustomView(View view, CustomViewCallback callback) {
@@ -391,6 +407,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    //处理HTML弹窗 按back键时取消弹窗
                     getDialog(message, result).show().setOnCancelListener(new DialogInterface.OnCancelListener() {
                         @Override
                         public void onCancel(DialogInterface dialog) {
@@ -416,35 +433,5 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 break;
         }
     }
+
 }
-   /* @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (backurl != null) {
-            if (backurl.indexOf("study") != -1 | backurl.indexOf("my") != -1) {
-                // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
-                if (System.currentTimeMillis() - exitTime > 2000) {
-                    Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
-                    // 将系统当前的时间赋值给exitTime
-                    exitTime = System.currentTimeMillis();
-                    return true;
-                } else {
-                    finish();
-                }
-            }
-        } else {
-            // 判断是否在两秒之内连续点击返回键，是则退出，否则不退出
-            if (System.currentTimeMillis() - exitTime > 2000) {
-                Toast.makeText(getApplicationContext(), "再按一次退出程序", Toast.LENGTH_SHORT).show();
-                // 将系统当前的时间赋值给exitTime
-                exitTime = System.currentTimeMillis();
-                return true;
-            } else {
-                finish();
-            }
-        }
-        if (keyCode == KeyEvent.KEYCODE_BACK && webView.canGoBack()) {
-            webView.goBack();
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }*/
