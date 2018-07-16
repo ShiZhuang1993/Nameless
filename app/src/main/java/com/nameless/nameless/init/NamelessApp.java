@@ -45,7 +45,7 @@ public class NamelessApp extends Application {
         manService.getMANAnalytics().init(this, getApplicationContext());
         // 通过此接口关闭页面自动打点功能，详见文档4.2
         manService.getMANAnalytics().turnOffAutoPageTrack();
-        Acp.getInstance(this).request(new AcpOptions.Builder()
+   /*     Acp.getInstance(this).request(new AcpOptions.Builder()
                         .setPermissions(Manifest.permission.READ_PHONE_STATE)
                         .build(),
                 new AcpListener() {
@@ -58,6 +58,6 @@ public class NamelessApp extends Application {
                     public void onDenied(List<String> permissions) {
 
                     }
-                });
+                });*/
     }
 }

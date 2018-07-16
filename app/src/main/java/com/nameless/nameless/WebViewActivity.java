@@ -206,7 +206,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     //登陆请求数据
     public void getLogin(int type) {
         //手机唯一标识
-        String deviceId = MobileIdentification.getIMEI(this);
+        String deviceId = MobileIdentification.getUniquePsuedoID();
         //随机数生成
         Random rand = new Random();
         int nonce = rand.nextInt(100);

@@ -183,7 +183,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     //请求数据
     private void getRegister() {
         //手机唯一标识
-        String deviceId = MobileIdentification.getIMEI(this);
+        String deviceId = MobileIdentification.getUniquePsuedoID();
         //随机数生成
         Random rand = new Random();
         int nonce = rand.nextInt();

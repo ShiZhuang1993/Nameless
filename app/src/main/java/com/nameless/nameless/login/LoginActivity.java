@@ -206,11 +206,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     //登陆请求数据
     public void getLogin(final int type, final String pwd) {
         //手机唯一标识
-        String deviceId = MobileIdentification.getIMEI(this);
-        if (deviceId == null) {
+        String deviceId = MobileIdentification.getUniquePsuedoID();
+       /* if (deviceId == null) {
             getDialog("您拒绝权限申请，此功能将不能正常使用，您可以去设置页面重新授权").show();
             return;
-        }
+        }*/
         //随机数生成
         Random rand = new Random();
         int nonce = rand.nextInt(100);
