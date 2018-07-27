@@ -23,13 +23,13 @@
             android:textSize="23sp" />
 
         <TextView
-            android:maxEms="8"
-            android:ellipsize="end"
-            android:maxLines="1"
             android:id="@+id/tv_webview_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
+            android:ellipsize="end"
+            android:maxEms="8"
+            android:maxLines="1"
             android:text="燕氏姓名学习"
             android:textColor="@color/colorwhite"
             android:textSize="23sp" />
@@ -46,14 +46,16 @@
     </RelativeLayout>
 
     <FrameLayout
-        android:background="#000000"
+
         android:id="@+id/video_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="#000000">
 
         <WebView
             android:id="@+id/webView"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
     </FrameLayout>
+
 </LinearLayout>

@@ -16,6 +16,8 @@ public class MyConfig {
     public static final String AUTO_LOGIN = "AUTO_LOGIN";
     public static final String REMEMBER_ACCOUNTS = "REMEMBER_ACCOUNTS";
     public static final String URL = "URL";
+    public static final String VERIFICATIONCODE="VERIFICATIONCODE";
+    public static final String TYPE="TYPE";
     //密钥
     public static final String SLEEPWALKER = "sleepwalker";
     //判断成功失败的标识

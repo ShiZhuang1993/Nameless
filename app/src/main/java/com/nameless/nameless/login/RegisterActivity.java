@@ -233,6 +233,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                     //保存账号。密码。
                     UserCentre.getInstance().setUserAccounts(et_register_code.getText().toString().trim());
                     UserCentre.getInstance().setUserPwd(et_register_pwsd.getText().toString().trim());
+                    UserCentre.getInstance().setType("1");
                     //登录点击跳转逻辑在此
                     Intent intent = new Intent(RegisterActivity.this, WebViewActivity.class);
                     startActivity(intent);

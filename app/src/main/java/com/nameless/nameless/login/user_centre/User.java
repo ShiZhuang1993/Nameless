@@ -17,6 +17,24 @@ public class User implements Serializable {
     private boolean rememberAccounts;
     private boolean autoLogin;
     private String url;
+    private String verificationcode;
+    private String type;
+
+    public String getType() {
+        return type == null ? "" : type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getVerificationcode() {
+        return verificationcode == null ? "" : verificationcode;
+    }
+
+    public void setVerificationcode(String verificationcode) {
+        this.verificationcode = verificationcode;
+    }
 
     public String getUrl() {
         return url == null ? "" : url;

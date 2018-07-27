@@ -5,7 +5,11 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -19,6 +23,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -29,6 +34,7 @@ import com.alibaba.sdk.android.man.MANService;
 import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.http.NetworkUtils;
 import com.nameless.nameless.http.RetrofitUtil;
+import com.nameless.nameless.login.LoginActivity;
 import com.nameless.nameless.login.bean.LoginBean;
 import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
@@ -106,39 +112,91 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        //webview监听
-        getWebViewClient();
+        settings.setDomStorageEnabled(true);//设置适应HTML5的一些方法
+
     }
 
     //webview初始化数据   逻辑
     private void initData() {
-        final String types = getIntent().getStringExtra("type");
-        Log.e("----type--------", types + "");
-        if (types != null && !types.equals("")) {
-            if (types.equals("0")) {
-                String url = getIntent().getStringExtra("url");
-                webView.loadUrl(url);
-            } else {
-                getLogin(1);
-            }
-
+        String type = UserCentre.getInstance().getTypes();
+        String pwd = UserCentre.getInstance().getPwd();
+        String verificationCode = UserCentre.getInstance().getVerificationCode();
+        if (pwd != null && !pwd.equals("")) {
+            getLogin(Integer.parseInt(type), pwd);
         } else {
-            getLogin(1);
-
+            getLogin(Integer.parseInt(type), verificationCode);
         }
 
+        //webview监听
+        getWebViewClient();
+
+    }
+
+    //登陆请求数据
+    public void getLogin(int type, String pwd) {
+        //手机唯一标识
+        String deviceId = MobileIdentification.getUniquePsuedoID();
+        //随机数生成
+        Random rand = new Random();
+        int nonce = rand.nextInt(100);
+        //获取当前时间戳
+        DateUtils date = new DateUtils();
+        String timestamp = date.getTime();
+        //token MD5加密生成
+        String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
+        String code = UserCentre.getInstance().getAccounts();
+        UserCentre.getInstance().getVerificationCode();
+        Log.e("----------所有数据---------", "devucrid---" + deviceId + "---随机数---" + nonce + "---时间戳---" + timestamp
+                + "---MD5---" + accessToken + "---账号---" + code + "---密码---" + pwd+ "---类型---" + type);
+        Map<String, String> stringMap = new HashMap<>();
+        stringMap.put("deviceId", deviceId);
+        stringMap.put("nonce", nonce + "");
+        stringMap.put("timestamp", timestamp);
+        stringMap.put("accessToken", accessToken);
+        stringMap.put("telephone", code);
+        stringMap.put("password", pwd);
+        RetrofitUtil.getInstance().login(stringMap, type, new Observer<LoginBean>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+            }
+
+            @Override
+            public void onNext(LoginBean value) {
+                if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
+                    webView.loadUrl(value.getResult());
+                    urls = value.getShare_url();
+                } else {
+                    Toast.makeText(WebViewActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
+                    promptDialog.showError("加载失败");
+                }
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Toast.makeText(WebViewActivity.this, "网络链接不可用，请稍后重试。", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
 
     }
 
     //webview监听
     private void getWebViewClient() {
-        //捕捉 html中点击过的链接
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.loadUrl(url);
-                return true;
+                /*view.loadUrl(url);*/
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    view.loadUrl(url);
+                    webView.stopLoading();
+                    return true;
+                }
+
+                return false;
             }
 
             @Override
@@ -158,9 +216,11 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 }
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                promptDialog.showError("加载失败");
+            public void onReceivedError(final WebView view, WebResourceRequest request, WebResourceError error) {
+                getDialogs("服务器异常，请重试！", view.getUrl()).show();
+
             }
 
             //捕捉 html中点击过的链接
@@ -203,56 +263,19 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         webView.setWebChromeClient(mMyWebChromeClient);
     }
 
-    //登陆请求数据
-    public void getLogin(int type) {
-        //手机唯一标识
-        String deviceId = MobileIdentification.getUniquePsuedoID();
-        //随机数生成
-        Random rand = new Random();
-        int nonce = rand.nextInt(100);
-        //获取当前时间戳
-        DateUtils date = new DateUtils();
-        String timestamp = date.getTime();
-        //token MD5加密生成
-        String accessToken = MD5Pwd.stringToMD5(timestamp + nonce + deviceId + MyConfig.SLEEPWALKER);
-        String code = UserCentre.getInstance().getAccounts();
-        String pwd = UserCentre.getInstance().getPwd();
-        Log.e("----------所有数据---------", "devucrid---" + deviceId + "---随机数---" + nonce + "---时间戳---" + timestamp
-                + "---MD5---" + accessToken + "---账号---" + code + "---密码---" + pwd);
-        Map<String, String> stringMap = new HashMap<>();
-        stringMap.put("deviceId", deviceId);
-        stringMap.put("nonce", nonce + "");
-        stringMap.put("timestamp", timestamp);
-        stringMap.put("accessToken", accessToken);
-        stringMap.put("telephone", code);
-        stringMap.put("password", pwd);
-        RetrofitUtil.getInstance().login(stringMap, type, new Observer<LoginBean>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-            }
+    //对话框
+    private AlertDialog.Builder getDialogs(String message, final String url) {
+        AlertDialog.Builder s = new AlertDialog.Builder(WebViewActivity.this)
+                .setMessage(message)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        webView.loadUrl(url);
+                    }
+                });
 
-            @Override
-            public void onNext(LoginBean value) {
-                if (value.getStatus().getCode().equals(MyConfig.SUCCESS)) {
-                    webView.loadUrl(value.getResult());
-                    urls = value.getShare_url();
-                } else {
-                    Toast.makeText(WebViewActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
-                    promptDialog.showError("加载失败");
-                }
-            }
 
-            @Override
-            public void onError(Throwable e) {
-                Toast.makeText(WebViewActivity.this, "网络链接不可用，请稍后重试。", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onComplete() {
-
-            }
-        });
-
+        return s;
     }
 
     //分享
@@ -433,5 +456,6 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 break;
         }
     }
+
 
 }

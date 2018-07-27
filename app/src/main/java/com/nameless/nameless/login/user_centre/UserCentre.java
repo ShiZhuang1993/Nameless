@@ -33,6 +33,8 @@ public class UserCentre {
             mUser = new User();
             String accounts = (String) SharedPreferencesUtils.getParam(MyConfig.ACCOUNTS, null);
             String pwd = (String) SharedPreferencesUtils.getParam(MyConfig.PWD, null);
+            String verificationCode = (String) SharedPreferencesUtils.getParam(MyConfig.VERIFICATIONCODE, null);
+            String type = (String) SharedPreferencesUtils.getParam(MyConfig.TYPE, null);
             boolean auto_login = (boolean) SharedPreferencesUtils.getParam(MyConfig.AUTO_LOGIN,
                     false);
             boolean remember_accounts = (boolean) SharedPreferencesUtils.getParam(MyConfig
@@ -43,6 +45,8 @@ public class UserCentre {
             mUser.setAutoLogin(auto_login);
             mUser.setRememberAccounts(remember_accounts);
             mUser.setUrl(url);
+            mUser.setVerificationcode(verificationCode);
+            mUser.setType(type);
         }
     }
 
@@ -57,7 +61,16 @@ public class UserCentre {
         SharedPreferencesUtils.setParam(MyConfig.PWD, pwd);
         mUser.setPwd(pwd);
     }
-
+    //设置验证码
+    public void setVerificationCode(String verificationCode) {
+        SharedPreferencesUtils.setParam(MyConfig.VERIFICATIONCODE, verificationCode);
+        mUser.setVerificationcode(verificationCode);
+    }
+    //设置登录状态
+    public void setType(String type) {
+        SharedPreferencesUtils.setParam(MyConfig.TYPE, type);
+        mUser.setType(type);
+    }
     //设置是否自动登录
     public void setAutoLogin(boolean login) {
         SharedPreferencesUtils.setParam(MyConfig.AUTO_LOGIN, login);
@@ -84,8 +97,14 @@ public class UserCentre {
     public String getPwd() {
         return mUser.getPwd();
     }
-
-
+    //获取验证码
+    public String getVerificationCode() {
+        return mUser.getVerificationcode();
+    }
+    //获取状态
+    public String getTypes() {
+        return mUser.getType();
+    }
     //获取自动登录状态
     public boolean getAutoLogin() {
         return mUser.isAutoLogin();
@@ -106,6 +125,8 @@ public class UserCentre {
         setAutoLogin(false);
         setRememberAccounts(false);
         setUrl(null);
+        setType(null);
+        setVerificationCode(null);
     }
 
     //清除帐号
@@ -116,7 +137,10 @@ public class UserCentre {
     public void clearPwd() {
         setUserPwd(null);
     }
-
+    //清除验证吗
+    public void clearVerificationCode() {
+        setVerificationCode(null);
+    }
     //释放资源
     public void destroy() {
         if (!mUser.isAutoLogin()) {

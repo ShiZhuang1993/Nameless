@@ -72,14 +72,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
         initView();
         initData();
     }
+
 
     //初始化布局
     private void initView() {
@@ -138,6 +134,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         ll_login_pwsd.setVisibility(View.GONE);
                         ll_login_authcode.setVisibility(View.VISIBLE);
                         et_login_code.setText("");
+                        et_login_pwsd.setText("");
                         et_login_authcode.setText("");
                         bt_login.setOnClickListener(new View.OnClickListener() {
                             @Override
@@ -154,35 +151,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     //初始化数据
     private void initData() {
         //判断本地存储得密码是否为null,为null时，当退出应用再次进入时展示登录页面
-        String pwd = UserCentre.getInstance().getPwd();
         boolean autoLogin = UserCentre.getInstance().getAutoLogin();
-        if (pwd != null && !pwd.equals("")) {
             if (autoLogin) {
                 Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
                 startActivity(intent);
                 finish();
             }
-        } else {
-            et_login_code.setText("");
-        }
     }
-
-    //账号 验证码  必填项判断
-    private void submitTwo() {
-        // validate
-        String code = et_login_code.getText().toString().trim();
-        if (TextUtils.isEmpty(code)) {
-            Toast.makeText(this, "请输入手机号", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        String authcode = et_login_authcode.getText().toString().trim();
-        if (TextUtils.isEmpty(authcode)) {
-            Toast.makeText(this, "请输入验证码", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        getLogin(0, authcode);
-    }    //账号密码 必填项判断
 
     private void submitOne() {
         // validate
@@ -202,6 +177,22 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     }
 
+    //账号 验证码  必填项判断
+    private void submitTwo() {
+        // validate
+        String code = et_login_code.getText().toString().trim();
+        if (TextUtils.isEmpty(code)) {
+            Toast.makeText(this, "请输入手机号", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String authcode = et_login_authcode.getText().toString().trim();
+        if (TextUtils.isEmpty(authcode)) {
+            Toast.makeText(this, "请输入验证码", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        getLogin(0, authcode);
+    }    //账号密码 必填项判断
 
     //登陆请求数据
     public void getLogin(final int type, final String pwd) {
@@ -250,24 +241,18 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         //保存账号。密码。
                         UserCentre.getInstance().setUserAccounts(et_login_code.getText().toString().trim());
                         UserCentre.getInstance().setUserPwd(et_login_pwsd.getText().toString().trim());
+                        UserCentre.getInstance().setVerificationCode(et_login_authcode.getText().toString().trim());
                     }
 
-                    if (type == 0) {
+                    //if (type == 0) {
                         //登录点击跳转逻辑在此
+                        UserCentre.getInstance().setType(type+"");
                         Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
-                        intent.putExtra("type", type + "");
-                        intent.putExtra("url", value.getResult());
                         startActivity(intent);
                         finish();
-                    } else {
-                        //登录点击跳转逻辑在此
-                        Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);
-                        intent.putExtra("type", type + "");
-                        startActivity(intent);
-                        finish();
-                    }
                 } else {
                     UserCentre.getInstance().clearPwd();
+                    UserCentre.getInstance().clearVerificationCode();
                     Toast.makeText(LoginActivity.this, value.getStatus().getMessage(), Toast.LENGTH_SHORT).show();
                 }
             }
@@ -282,6 +267,29 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
             }
         });
+    }
+
+    //对话框
+    private AlertDialog.Builder getDialog(String message) {
+        AlertDialog.Builder s = new AlertDialog.Builder(LoginActivity.this)
+                .setMessage(message)
+                .setPositiveButton("设置权限", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent();
+                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        intent.setData(Uri.fromParts("package", getPackageName(), null));
+                        startActivity(intent);
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+
+        return s;
     }
 
     @Override
@@ -337,26 +345,5 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         });
     }
 
-    //对话框
-    private AlertDialog.Builder getDialog(String message) {
-        AlertDialog.Builder s = new AlertDialog.Builder(LoginActivity.this)
-                .setMessage(message)
-                .setPositiveButton("设置权限", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent();
-                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        intent.setData(Uri.fromParts("package", getPackageName(), null));
-                        startActivity(intent);
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
 
-        return s;
-    }
 }
