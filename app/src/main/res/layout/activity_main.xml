@@ -33,16 +33,18 @@
             android:text="燕氏姓名学习"
             android:textColor="@color/colorwhite"
             android:textSize="23sp" />
-
-        <ImageView
+        <TextView
             android:id="@+id/iv_main_share"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:text="分享"
+            android:visibility="gone"
             android:layout_alignParentRight="true"
             android:layout_centerVertical="true"
             android:layout_marginRight="10dp"
-            android:src="@mipmap/gengduo_bai"
-            android:visibility="gone" />
+            android:textColor="@color/colorwhite"
+            android:textSize="20sp" />
     </RelativeLayout>
 
     <FrameLayout

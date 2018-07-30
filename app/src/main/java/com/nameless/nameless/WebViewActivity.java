@@ -5,10 +5,8 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -23,9 +21,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,7 +30,6 @@ import com.alibaba.sdk.android.man.MANService;
 import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.http.NetworkUtils;
 import com.nameless.nameless.http.RetrofitUtil;
-import com.nameless.nameless.login.LoginActivity;
 import com.nameless.nameless.login.bean.LoginBean;
 import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
@@ -61,7 +56,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
 
     private WebView webView;
     private long exitTime = 0;
-    private ImageView iv_main_share;
+    private TextView iv_main_share;
     private TextView tv_webview_exit;
     private PromptDialog promptDialog;
     private TextView tv_webview_title;
@@ -84,7 +79,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     //初始化布局
     private void initView() {
         rll = (RelativeLayout) findViewById(R.id.rll);
-        iv_main_share = (ImageView) findViewById(R.id.iv_main_share);
+        iv_main_share = (TextView) findViewById(R.id.iv_main_share);
         iv_main_share.setOnClickListener(this);
         webView = (WebView) findViewById(R.id.webView);
         tv_webview_exit = (TextView) findViewById(R.id.tv_webview_exit);
