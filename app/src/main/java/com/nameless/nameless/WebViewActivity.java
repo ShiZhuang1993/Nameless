@@ -30,6 +30,7 @@ import com.alibaba.sdk.android.man.MANService;
 import com.alibaba.sdk.android.man.MANServiceProvider;
 import com.nameless.nameless.http.NetworkUtils;
 import com.nameless.nameless.http.RetrofitUtil;
+import com.nameless.nameless.login.LoginActivity;
 import com.nameless.nameless.login.bean.LoginBean;
 import com.nameless.nameless.login.user_centre.MyConfig;
 import com.nameless.nameless.login.user_centre.UserCentre;
@@ -116,12 +117,18 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         String type = UserCentre.getInstance().getTypes();
         String pwd = UserCentre.getInstance().getPwd();
         String verificationCode = UserCentre.getInstance().getVerificationCode();
-        if (pwd != null && !pwd.equals("")) {
-            getLogin(Integer.parseInt(type), pwd);
+        if (type != null && !type.equals("")) {
+            int intValue = Integer.valueOf(type).intValue();
+            if (pwd != null && !pwd.equals("")) {
+                getLogin(intValue, pwd);
+            } else {
+                getLogin(intValue, verificationCode);
+            }
         } else {
-            getLogin(Integer.parseInt(type), verificationCode);
+            UserCentre.getInstance().clear();
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
         }
-
         //webview监听
         getWebViewClient();
 
@@ -142,7 +149,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         String code = UserCentre.getInstance().getAccounts();
         UserCentre.getInstance().getVerificationCode();
         Log.e("----------所有数据---------", "devucrid---" + deviceId + "---随机数---" + nonce + "---时间戳---" + timestamp
-                + "---MD5---" + accessToken + "---账号---" + code + "---密码---" + pwd+ "---类型---" + type);
+                + "---MD5---" + accessToken + "---账号---" + code + "---密码---" + pwd + "---类型---" + type);
         Map<String, String> stringMap = new HashMap<>();
         stringMap.put("deviceId", deviceId);
         stringMap.put("nonce", nonce + "");
