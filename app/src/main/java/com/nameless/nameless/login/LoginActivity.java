@@ -244,7 +244,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                         UserCentre.getInstance().setVerificationCode(et_login_authcode.getText().toString().trim());
                     }
 
-                    //if (type == 0) {
                         //登录点击跳转逻辑在此
                         UserCentre.getInstance().setType(type+"");
                         Intent intent = new Intent(LoginActivity.this, WebViewActivity.class);

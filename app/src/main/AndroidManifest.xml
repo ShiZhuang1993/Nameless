@@ -15,7 +15,6 @@
     <application
         android:name=".init.NamelessApp"
         android:allowBackup="true"
-        android:hardwareAccelerated="true"
         android:icon="@mipmap/icon_s"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/icon_s"
@@ -24,7 +23,6 @@
         <activity android:name=".login.LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

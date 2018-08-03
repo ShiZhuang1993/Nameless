@@ -5,9 +5,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.RequiresApi;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -22,6 +20,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,6 +66,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     private FrameLayout video_view;
     private MyWebChromeClient mMyWebChromeClient;
     private RelativeLayout rll;
+    private ImageView iv_shuaxin;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +109,14 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         settings.setUseWideViewPort(true);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setDomStorageEnabled(true);//设置适应HTML5的一些方法
+
+        iv_shuaxin = (ImageView) findViewById(R.id.iv_shuaxin);
+        iv_shuaxin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                webView.loadUrl(backurl);
+            }
+        });
 
     }
 
@@ -191,13 +199,7 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                /*view.loadUrl(url);*/
-                if (url.startsWith("http://") || url.startsWith("https://")) {
-                    view.loadUrl(url);
-                    webView.stopLoading();
-                    return true;
-                }
-
+                view.loadUrl(url);
                 return false;
             }
 
@@ -210,20 +212,28 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
+                webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                 tv_webview_title.setText(view.getTitle());
                 if (NetworkUtils.isNetworkAvailable(WebViewActivity.this)) {
                     promptDialog.showSuccess("加载成功");
                 } else {
                     promptDialog.showError("请开启网络后重试");
+                    return;
                 }
             }
 
-            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onReceivedError(final WebView view, WebResourceRequest request, WebResourceError error) {
-                getDialogs("服务器异常，请重试！", view.getUrl()).show();
-
+                Log.e("======error========", error.toString());
+                final String url = view.getUrl();
+                getDialogs("加载失败，请重试！", view.getUrl()).show();
+                if (backurl.indexOf("my") != -1) {
+                    iv_shuaxin.setVisibility(View.VISIBLE);
+                } else {
+                    iv_shuaxin.setVisibility(View.GONE);
+                }
             }
+
 
             //捕捉 html中点击过的链接
             @Override
@@ -231,6 +241,11 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
                 super.doUpdateVisitedHistory(view, url, isReload);
                 Log.e("=====url====", "=" + url);
                 backurl = url;
+                if (backurl.indexOf("my") != -1) {
+                    iv_shuaxin.setVisibility(View.VISIBLE);
+                } else {
+                    iv_shuaxin.setVisibility(View.GONE);
+                }
                 if (url.indexOf("caseAnalysis/detail") != -1) {
                     //   tv_webview_title.setText(view.getTitle());
                     iv_main_share.setVisibility(View.VISIBLE);
@@ -268,15 +283,15 @@ public class WebViewActivity extends AppCompatActivity implements View.OnClickLi
     //对话框
     private AlertDialog.Builder getDialogs(String message, final String url) {
         AlertDialog.Builder s = new AlertDialog.Builder(WebViewActivity.this)
+                .setTitle("提示")
                 .setMessage(message)
+                .setCancelable(false)
                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         webView.loadUrl(url);
                     }
                 });
-
-
         return s;
     }
 
